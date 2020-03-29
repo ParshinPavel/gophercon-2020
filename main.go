@@ -10,16 +10,28 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/DataDog/datadog-go/statsd"
 	"go.uber.org/zap"
+	muxtrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gorilla/mux"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 func main() {
+	tracer.Start()
+	defer tracer.Stop()
+
 	logger, _ := zap.NewProduction()
 	defer logger.Sync() // flushes buffer, if any
 	sugar := logger.Sugar().Named("gophercon")
 
 	sugar.Info("The app is starting...")
+
+	c, err := statsd.New("127.0.0.1:8125")
+	if err != nil {
+		sugar.Fatalw("Failed to start statsd", "err", err)
+	}
+	c.Namespace = "gophercon"
+	c.Tags = []string{"gophercon-2020"}
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -31,16 +43,20 @@ func main() {
 		sugar.Fatal("DIAG_PORT is not set")
 	}
 
-	r := mux.NewRouter()
+	r := muxtrace.NewRouter()
 	server := http.Server{
 		Addr:    net.JoinHostPort("", port),
 		Handler: r,
 	}
 
 	diagLogger := sugar.With("subapp", "diag_router")
-	diagRouter := mux.NewRouter()
+	diagRouter := muxtrace.NewRouter()
 	diagRouter.Handle("/debug/vars", expvar.Handler())
 	diagRouter.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
+		err = c.Incr("health_calls", []string{}, 1)
+		if err != nil {
+			diagLogger.Errorw("Could not increment health_calls", "err", err)
+		}
 		diagLogger.Info("Health was called")
 		w.WriteHeader(http.StatusOK)
 	})
@@ -82,7 +98,7 @@ func main() {
 	timeout, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelFunc()
 
-	err := server.Shutdown(timeout)
+	err = server.Shutdown(timeout)
 	if err != nil {
 		sugar.Errorw("The business logic is stopped with error", "err", err)
 	}

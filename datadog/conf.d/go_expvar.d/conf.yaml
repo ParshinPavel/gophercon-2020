@@ -31,7 +31,7 @@ instances:
     ## @param expvar_url - string - required
     ## Expvar URL to gather your metrics from.
     #
-  - expvar_url: http://gophercon-2020:8081/debug/vars
+  - expvar_url: http://localhost:8081/debug/vars
 
     ## @param namespace - string - optional - default: go_expvar
     ## Define your namespace that is prefixed to all metrics collected by this check.
@@ -44,7 +44,7 @@ instances:
     ## Learn more about tagging at https://docs.datadoghq.com/tagging
     #
     tags:
-      - user:parshin
+      - user:gophercon
 
     ## @param metrics - list of objects - optional
     ## These metrics are just here as examples.

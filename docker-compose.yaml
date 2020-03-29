@@ -11,20 +11,19 @@ services:
     environment:
       - PORT
       - DIAG_PORT
-    ports:
-      - 8080:8080
-      - 8081:8081
+    network_mode: host
 
   datadog:
     build: datadog
-    links:
-      - gophercon-2020
     environment:
       - DD_API_KEY
       - DD_SITE
       - DD_LOGS_ENABLED
       - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
       - DD_AC_EXCLUDE
+      - DD_APM_NON_LOCAL_TRAFFIC
+      - DD_APM_ENABLED
+    network_mode: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${PWD}/datadog/conf.d:/conf.d:ro
