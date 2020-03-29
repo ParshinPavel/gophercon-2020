@@ -27,6 +27,7 @@ services:
       - DD_AC_EXCLUDE
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ${PWD}/datadog/conf.d:/conf.d:ro
       - /proc/:/host/proc/:ro
       - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
       - /opt/datadog-agent/run:/opt/datadog-agent/run:rw

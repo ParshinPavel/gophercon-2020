@@ -31,21 +31,20 @@ instances:
     ## @param expvar_url - string - required
     ## Expvar URL to gather your metrics from.
     #
-  - expvar_url: http://localhost:8080
+  - expvar_url: http://gophercon-2020:8081/debug/vars
 
     ## @param namespace - string - optional - default: go_expvar
     ## Define your namespace that is prefixed to all metrics collected by this check.
     #
-    # namespace: <NAMESPACE>
+    namespace: dev
 
     ## @param tags - list of key:value string - optional
     ## List of tags to attach to every metric and service check emitted by this integration.
     ##
     ## Learn more about tagging at https://docs.datadoghq.com/tagging
     #
-    # tags:
-    #   - <KEY_1>:<VALUE_1>
-    #   - <KEY_2>:<VALUE_2>
+    tags:
+      - user:parshin
 
     ## @param metrics - list of objects - optional
     ## These metrics are just here as examples.
@@ -62,20 +61,27 @@ instances:
     ##  * gauge (the default)
     ##  * rate (note that this shows up as a gauge in Datadog that is meant to be seen as a "per second rate")
     #
-    # metrics:
-    #   - path: memstats/PauseTotalNs
-    #     alias: go_expvar.gc.pause_time_in_ns
-    #     type: rate
-    #     tags:
-    #       - "<TAG_KEY>:<TAG_VALUE>"
-    #   - path: memstats/Alloc
-    #   - path: memstats/Lookups
-    #     type: rate
-    #   - path: memstats/Mallocs
-    #     type: count
-    #   - path: memstats/Frees
-    #     type: rate
-    #   - path: memstats/BySize/1/Mallocs
+    metrics:
+      - path: memstats/PauseTotalNs
+        alias: go_expvar.gc.pause_time_in_ns
+        type: rate
+      - path: memstats/Alloc
+      - path: memstats/Lookups
+        type: rate
+      - path: memstats/Mallocs
+        type: count
+      - path: memstats/Frees
+        type: rate
+      - path: memstats/BySize/1/Mallocs
+      - path: memstats/NumGC
+        alias: go_expvar.num_gc_gauge
+        type: gauge
+      - path: memstats/NumGC
+        alias: go_expvar.num_gc_rate
+        type: rate
+      - path: memstats/NumGC
+        alias: go_expvar.num_gc_count
+        type: count
     #   - path: myvariable
     #     alias: go_expvar.my_custom_name
     #     type: gauge
