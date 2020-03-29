@@ -1,0 +1,32 @@
+version: "3"
+
+services:
+  gophercon-2020:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    labels:
+      com.datadoghq.ad.check_names: '["gophercon-2020"]'
+      com.datadoghq.ad.logs: '[{"source": "go", "service": "gophercon-2020"}]'
+    environment:
+      - PORT
+      - DIAG_PORT
+    ports:
+      - 8080:8080
+      - 8081:8081
+
+  datadog:
+    build: datadog
+    links:
+      - gophercon-2020
+    environment:
+      - DD_API_KEY
+      - DD_SITE
+      - DD_LOGS_ENABLED
+      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
+      - DD_AC_EXCLUDE
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+      - /opt/datadog-agent/run:/opt/datadog-agent/run:rw
