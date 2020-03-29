@@ -10,17 +10,24 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 func main() {
+	logger, _ := zap.NewProduction()
+	defer logger.Sync() // flushes buffer, if any
+	sugar := logger.Sugar().Named("gophercon")
+
+	sugar.Info("The app is starting...")
+
 	port := os.Getenv("PORT")
 	if port == "" {
-		return
+		sugar.Fatal("PORT is not set")
 	}
 
 	diagPort := os.Getenv("DIAG_PORT")
 	if diagPort == "" {
-		return
+		sugar.Fatal("DIAG_PORT is not set")
 	}
 
 	r := mux.NewRouter()
@@ -42,6 +49,7 @@ func main() {
 
 	shutdown := make(chan error, 2)
 
+	sugar.Info("Business server is starting...")
 	go func() {
 		err := server.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
@@ -49,6 +57,7 @@ func main() {
 		}
 	}()
 
+	sugar.Info("Diagnostics server is starting...")
 	go func() {
 		err := diag.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
@@ -61,22 +70,24 @@ func main() {
 
 	select {
 	case x := <-interrupt:
-		// Received a signal
+		sugar.Infow("The app received a stop signal", "signal", x.String())
 
 	case err := <-shutdown:
-		// Received a shutdown message
+		sugar.Errorw("Error from functional unit", "err", err)
 	}
 
 	timeout, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelFunc()
 
-	err := diag.Shutdown(timeout)
+	err := server.Shutdown(timeout)
 	if err != nil {
-		// ?
+		sugar.Errorw("The business logic is stopped with error", "err", err)
 	}
 
-	err = server.Shutdown(timeout)
+	err = diag.Shutdown(timeout)
 	if err != nil {
-		// ?
+		sugar.Errorw("The diagnostics logic is stopped with error", "err", err)
 	}
+
+	sugar.Info("The app is shut downed")
 }
