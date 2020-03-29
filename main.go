@@ -36,9 +36,10 @@ func main() {
 		Handler: r,
 	}
 
+	diagLogger := sugar.With("subapp", "diag_router")
 	diagRouter := mux.NewRouter()
-	diagRouter.HandleFunc("/health", func(
-		w http.ResponseWriter, _ *http.Request) {
+	diagRouter.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
+		diagLogger.Info("Health was called")
 		w.WriteHeader(http.StatusOK)
 	})
 
